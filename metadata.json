@@ -1,0 +1,6 @@
+{
+  "name": " Excel問題サイト",
+  "description": "A web application for taking and grading Excel fill-in-the-blanks quizzes, focusing on sheet operations.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}
