@@ -16,11 +16,17 @@ const App: React.FC = () => {
   const [currentUserAnswers, setCurrentUserAnswers] = useState<UserAnswers>({});
   const [currentScore, setCurrentScore] = useState<number>(0);
   const [history, setHistory] = useLocalStorage<ScoreEntry[]>('excelQuizHistory', []);
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<any>(undefined);
 
   const supabase = getSupabaseClient();
 
   useEffect(() => {
+    // 初回マウント時にsessionを取得
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+    });
+
+    // onAuthStateChangeでsessionを監視
     const { data: authListener } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       setSession(session);
     });
@@ -29,23 +35,13 @@ const App: React.FC = () => {
     };
   }, []);
 
+  // session取得中はローディング表示
+  if (session === undefined) {
+    return <div className="min-h-screen flex items-center justify-center bg-slate-100 text-xl">Loading...</div>;
+  }
+
   // Googleログイン後のユーザー情報取得
   const userAvatar = session?.user?.user_metadata?.avatar_url || '';
-
-  if (!session) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-100">
-        <button
-          onClick={async () => {
-            await supabase.auth.signInWithOAuth({ provider: 'google' });
-          }}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-xl shadow"
-        >
-          Googleでログイン
-        </button>
-      </div>
-    );
-  }
 
   const handleSelectChapter = (chapterId: number) => {
     const chapter = ALL_CHAPTERS.find(c => c.id === chapterId);
