@@ -40,6 +40,20 @@ const App: React.FC = () => {
     return <div className="min-h-screen flex items-center justify-center bg-slate-100 text-xl">Loading...</div>;
   }
 
+  // 未ログイン時はGoogleログイン画面のみ表示
+  if (!session) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-100">
+        <Auth
+          supabaseClient={supabase}
+          providers={["google"]}
+          onlyThirdPartyProviders
+          appearance={{ theme: ThemeSupa }}
+        />
+      </div>
+    );
+  }
+
   // Googleログイン後のユーザー情報取得
   const userAvatar = session?.user?.user_metadata?.avatar_url || '';
 
@@ -139,6 +153,7 @@ const App: React.FC = () => {
           onClick={async () => {
             await supabase.auth.signOut();
             setSession(null);
+            // ログアウト後に即座にAuth UIへ遷移
           }}
           className="bg-red-500 hover:bg-red-600 text-white font-semibold px-3 py-1 rounded shadow text-xs"
         >
