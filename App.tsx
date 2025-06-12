@@ -56,6 +56,7 @@ const App: React.FC = () => {
               }
             }
           }}
+          redirectTo={window.location.origin}
         />
       </div>
     );
