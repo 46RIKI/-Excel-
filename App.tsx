@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Page, Chapter as ChapterType, UserAnswers, ScoreEntry } from './types';
-import { ALL_CHAPTERS, CHAPTER_5_DATA } from './constants';
+import { ALL_CHAPTERS } from './constants';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import ChapterSelectionScreen from './components/ChapterSelectionScreen';
 import ProblemScreen from './components/ProblemScreen';
@@ -49,6 +49,13 @@ const App: React.FC = () => {
           providers={["google"]}
           onlyThirdPartyProviders
           appearance={{ theme: ThemeSupa }}
+          localization={{
+            variables: {
+              sign_in: {
+                social_provider_text: 'Googleでログイン'
+              }
+            }
+          }}
         />
       </div>
     );
@@ -140,7 +147,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-100 py-6 flex flex-col justify-center sm:py-12">
-      <div className="absolute top-0 left-0 m-4 flex items-center space-x-4 z-50">
+      <div className="absolute top-0 right-0 mr-4 mt-4 flex items-center space-x-4 z-50">
         {userAvatar && (
           <img
             src={userAvatar}
