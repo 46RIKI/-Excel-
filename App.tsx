@@ -6,6 +6,7 @@ import ChapterSelectionScreen from './components/ChapterSelectionScreen';
 import ProblemScreen from './components/ProblemScreen';
 import ResultScreen from './components/ResultScreen';
 import HistoryScreen from './components/HistoryScreen';
+import LoginScreen from './components/LoginScreen';
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { getSupabaseClient } from './hooks/useSupabase';
@@ -41,30 +42,17 @@ const App: React.FC = () => {
     return <div className="min-h-screen flex items-center justify-center bg-slate-100 text-xl">Loading...</div>;
   }
 
-  // 未ログイン時はGoogleログイン画面のみ表示
+  // 未ログイン時はログイン画面を表示
   if (!session) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-100">
-        <Auth
-          supabaseClient={supabase}
-          providers={["google"]}
-          onlyThirdPartyProviders
-          appearance={{ theme: ThemeSupa }}
-          localization={{
-            variables: {
-              sign_in: {
-                social_provider_text: 'Googleでログイン'
-              }
-            }
-          }}
-          redirectTo={window.location.origin}
-        />
-      </div>
-    );
+    return <LoginScreen />;
   }
 
   // Googleログイン後のユーザー情報取得
   const userAvatar = session?.user?.user_metadata?.avatar_url || '';
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
 
   const handleSelectChapter = (chapterId: number) => {
     const chapter = ALL_CHAPTERS.find(c => c.id === chapterId);
@@ -208,12 +196,8 @@ const App: React.FC = () => {
           />
         )}
         <button
-          onClick={async () => {
-            await supabase.auth.signOut();
-            setSession(null);
-            // ログアウト後に即座にAuth UIへ遷移
-          }}
-          className="bg-red-500 hover:bg-red-600 text-white font-semibold px-3 py-1 rounded shadow text-xs"
+          onClick={handleLogout}
+          className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded shadow text-sm"
         >
           ログアウト
         </button>

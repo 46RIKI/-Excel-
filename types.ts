@@ -1,4 +1,3 @@
-
 export interface Blank {
   id: string; // e.g., 'ア', 'イ'
   label: string; // e.g., '(ア)', '(イ)' - used for display if needed, but mainly for mapping
@@ -38,4 +37,5 @@ export enum Page {
   Problem = 'Problem',
   Result = 'Result',
   History = 'History',
+  Login = 'Login'
 }
