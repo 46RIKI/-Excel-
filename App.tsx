@@ -73,7 +73,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleSubmitAnswers = (answers: UserAnswers) => {
+  const handleSubmitAnswers = async (answers: UserAnswers) => {
     if (!selectedChapter) return;
 
     setCurrentUserAnswers(answers);
@@ -98,6 +98,25 @@ const App: React.FC = () => {
       choices: selectedChapter.choices,
     };
     setHistory(prevHistory => [...prevHistory, newScoreEntry]);
+
+    // Supabaseに履歴を保存
+    try {
+      await supabase.from('scores').insert([
+        {
+          user_id: session.user.id,
+          chapter_id: selectedChapter.id,
+          chapter_title: selectedChapter.title,
+          score: score,
+          date: new Date().toISOString(),
+          user_answers: answers,
+          correct_answers: selectedChapter.correctAnswers,
+          question_segments: selectedChapter.questionSegments,
+          choices: selectedChapter.choices,
+        }
+      ]);
+    } catch (e) {
+      console.error('Supabaseへの履歴保存に失敗:', e);
+    }
     
     setCurrentPage(Page.Result);
   };
@@ -115,7 +134,32 @@ const App: React.FC = () => {
     setCurrentPage(Page.ChapterSelection);
   };
 
-  const handleShowHistory = () => {
+  const handleShowHistory = async () => {
+    // Supabaseから自分の履歴を取得
+    try {
+      const { data, error } = await supabase
+        .from('scores')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .order('date', { ascending: false });
+      if (error) throw error;
+      if (data) {
+        // SupabaseのデータをScoreEntry型に変換
+        const supabaseHistory = data.map((row: any) => ({
+          chapterId: row.chapter_id,
+          chapterTitle: row.chapter_title,
+          score: row.score,
+          date: row.date,
+          userAnswers: row.user_answers,
+          correctAnswers: row.correct_answers,
+          questionSegments: row.question_segments,
+          choices: row.choices,
+        }));
+        setHistory(supabaseHistory);
+      }
+    } catch (e) {
+      console.error('Supabaseから履歴取得に失敗:', e);
+    }
     setCurrentPage(Page.History);
   };
   
