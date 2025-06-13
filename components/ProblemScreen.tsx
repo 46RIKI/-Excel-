@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Chapter, UserAnswers } from '../types';
 
@@ -77,7 +76,7 @@ const ProblemScreen: React.FC<ProblemScreenProps> = ({ chapter, onSubmit, onBack
               aria-label={`Answer for blank ${blankId}`}
             >
               <option value="" className="text-gray-500">
-                選択してください ({blankId})
+                選択してください {blankId}
               </option>
               {chapter.choices.map(choice => (
                 <option key={choice} value={choice} className="text-gray-900">
