@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Chapter } from '../types';
 
@@ -6,9 +5,10 @@ interface ChapterSelectionScreenProps {
   chapters: Chapter[];
   onSelectChapter: (chapterId: number) => void;
   onShowHistory: () => void;
+  onShowChapterHistory: (chapterId: number) => void;
 }
 
-const ChapterSelectionScreen: React.FC<ChapterSelectionScreenProps> = ({ chapters, onSelectChapter, onShowHistory }) => {
+const ChapterSelectionScreen: React.FC<ChapterSelectionScreenProps> = ({ chapters, onSelectChapter, onShowHistory, onShowChapterHistory }) => {
   return (
     <div className="container mx-auto p-4 md:p-8 max-w-2xl">
       <div className="bg-white shadow-xl rounded-lg p-6 md:p-8">
@@ -17,13 +17,20 @@ const ChapterSelectionScreen: React.FC<ChapterSelectionScreenProps> = ({ chapter
         
         <div className="space-y-4 mb-8">
           {chapters.map((chapter) => (
-            <button
-              key={chapter.id}
-              onClick={() => onSelectChapter(chapter.id)}
-              className="w-full bg-sky-600 hover:bg-sky-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md transition duration-150 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-opacity-50"
-            >
-              {chapter.title}
-            </button>
+            <div key={chapter.id}>
+              <button
+                onClick={() => onSelectChapter(chapter.id)}
+                className="w-full bg-sky-600 hover:bg-sky-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md transition duration-150 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-opacity-50"
+              >
+                {chapter.title}
+              </button>
+              <button
+                onClick={() => onShowChapterHistory(chapter.id)}
+                className="w-full mt-2 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg shadow text-sm"
+              >
+                {chapter.title}の学習履歴を見る
+              </button>
+            </div>
           ))}
         </div>
 

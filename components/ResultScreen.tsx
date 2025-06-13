@@ -1,6 +1,6 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Chapter, UserAnswers } from '../types';
+import { useGemini } from '../hooks/useGemini';
 
 interface ResultScreenProps {
   chapter: Chapter;
@@ -11,7 +11,26 @@ interface ResultScreenProps {
 }
 
 const ResultScreen: React.FC<ResultScreenProps> = ({ chapter, userAnswers, score, onRetry, onBackToChapters }) => {
-  
+  const { getAdvice, loading, error } = useGemini();
+  const [advice, setAdvice] = useState<string | null>(null);
+
+  useEffect(() => {
+    // 採点直後のアドバイス生成
+    const fetchAdvice = async () => {
+      const prompt = `あなたはExcelの講師です。以下の内容を分析し、次の3点を日本語で簡潔に返してください。得意な点は「これです」と具体的に列挙してください。苦手な点も「ここです」と具体的に列挙してください。どこを復習すべきか、改善点や今後の学習アドバイスも付け加えてください。マークダウンや*や**などの記号は使わないでください。番号や箇条書きも使わず、文章で分かりやすくまとめてください。`;
+      const context = {
+        chapterTitle: chapter.title,
+        userAnswers,
+        correctAnswers: chapter.correctAnswers,
+        score
+      };
+      const result = await getAdvice(prompt, context);
+      setAdvice(result);
+    };
+    fetchAdvice();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chapter, userAnswers, score]);
+
   const renderGradedQuestion = () => {
     return chapter.questionSegments.map((segment, index) => {
       if (typeof segment === 'string') {
@@ -52,6 +71,14 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ chapter, userAnswers, score
 
         <div className="mb-8 p-4 border border-gray-200 rounded-md bg-slate-50 whitespace-pre-line leading-relaxed text-gray-700" style={{lineHeight: '2.5'}}>
           {renderGradedQuestion()}
+        </div>
+
+        {/* Geminiアドバイス表示 */}
+        <div className="mb-8 p-4 border border-yellow-200 rounded-md bg-yellow-50">
+          <h3 className="text-lg font-semibold mb-2 text-yellow-700">AI講師からのアドバイス</h3>
+          {loading && <div className="text-yellow-600">アドバイス生成中...</div>}
+          {error && <div className="text-red-500">{error}</div>}
+          {advice && <div className="text-gray-800 whitespace-pre-line">{advice}</div>}
         </div>
 
         <div className="mb-8">

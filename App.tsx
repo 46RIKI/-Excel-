@@ -17,6 +17,7 @@ const App: React.FC = () => {
   const [currentScore, setCurrentScore] = useState<number>(0);
   const [history, setHistory] = useLocalStorage<ScoreEntry[]>('excelQuizHistory', []);
   const [session, setSession] = useState<any>(undefined);
+  const [filteredChapterId, setFilteredChapterId] = useState<number | null>(null);
 
   const supabase = getSupabaseClient();
 
@@ -169,10 +170,15 @@ const App: React.FC = () => {
     }
   };
 
+  const handleShowChapterHistory = (chapterId: number) => {
+    setFilteredChapterId(chapterId);
+    setCurrentPage(Page.History);
+  };
+
   const renderPage = () => {
     switch (currentPage) {
       case Page.ChapterSelection:
-        return <ChapterSelectionScreen chapters={ALL_CHAPTERS} onSelectChapter={handleSelectChapter} onShowHistory={handleShowHistory} />;
+        return <ChapterSelectionScreen chapters={ALL_CHAPTERS} onSelectChapter={handleSelectChapter} onShowHistory={handleShowHistory} onShowChapterHistory={handleShowChapterHistory} />;
       case Page.Problem:
         if (selectedChapter) {
           return <ProblemScreen chapter={selectedChapter} onSubmit={handleSubmitAnswers} onBack={handleBackToChapters}/>;
@@ -184,9 +190,9 @@ const App: React.FC = () => {
         }
         return null;
       case Page.History:
-        return <HistoryScreen history={history} onBackToChapters={handleBackToChapters} onClearHistory={handleClearHistory}/>;
+        return <HistoryScreen history={history} onBackToChapters={handleBackToChapters} onClearHistory={handleClearHistory} filteredChapterId={filteredChapterId} setFilteredChapterId={setFilteredChapterId}/>;
       default:
-        return <ChapterSelectionScreen chapters={ALL_CHAPTERS} onSelectChapter={handleSelectChapter} onShowHistory={handleShowHistory} />;
+        return <ChapterSelectionScreen chapters={ALL_CHAPTERS} onSelectChapter={handleSelectChapter} onShowHistory={handleShowHistory} onShowChapterHistory={handleShowChapterHistory} />;
     }
   };
 
