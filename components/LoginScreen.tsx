@@ -3,7 +3,11 @@ import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { getSupabaseClient } from '../hooks/useSupabase';
 
-const LoginScreen: React.FC = () => {
+interface LoginScreenProps {
+  onCancel?: () => void;
+}
+
+const LoginScreen: React.FC<LoginScreenProps> = ({ onCancel }) => {
   const supabase = getSupabaseClient();
 
   return (
@@ -44,6 +48,14 @@ const LoginScreen: React.FC = () => {
           redirectTo={window.location.origin}
         />
       </div>
+      {onCancel && (
+        <button
+          onClick={onCancel}
+          className="mt-4 bg-slate-300 hover:bg-slate-400 text-gray-700 font-semibold py-2 px-6 rounded-xl shadow text-base"
+        >
+          キャンセル
+        </button>
+      )}
       <p className="mt-8 text-sm text-gray-500">
         © 2025 Excel Quiz Grader. All rights reserved.
       </p>

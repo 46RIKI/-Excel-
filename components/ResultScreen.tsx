@@ -30,7 +30,7 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ chapter, userAnswers, score
     fetchAdvice();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chapter, userAnswers, score]);
-
+  
   const renderGradedQuestion = () => {
     return chapter.questionSegments.map((segment, index) => {
       if (typeof segment === 'string') {

@@ -7,8 +7,6 @@ import ProblemScreen from './components/ProblemScreen';
 import ResultScreen from './components/ResultScreen';
 import HistoryScreen from './components/HistoryScreen';
 import LoginScreen from './components/LoginScreen';
-import { Auth } from '@supabase/auth-ui-react';
-import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { getSupabaseClient } from './hooks/useSupabase';
 
 const App: React.FC = () => {
@@ -19,6 +17,7 @@ const App: React.FC = () => {
   const [history, setHistory] = useLocalStorage<ScoreEntry[]>('excelQuizHistory', []);
   const [session, setSession] = useState<any>(undefined);
   const [filteredChapterId, setFilteredChapterId] = useState<number | null>(null);
+  const [showLoginScreen, setShowLoginScreen] = useState<boolean>(false);
 
   const supabase = getSupabaseClient();
 
@@ -42,9 +41,9 @@ const App: React.FC = () => {
     return <div className="min-h-screen flex items-center justify-center bg-slate-100 text-xl">Loading...</div>;
   }
 
-  // 未ログイン時はログイン画面を表示
-  if (!session) {
-    return <LoginScreen />;
+  // 未ログイン時は右上にログインボタンを表示し、showLoginScreen時のみLoginScreenを表示
+  if (!session && showLoginScreen) {
+    return <LoginScreen onCancel={() => setShowLoginScreen(false)} />;
   }
 
   // Googleログイン後のユーザー情報取得
@@ -55,6 +54,10 @@ const App: React.FC = () => {
   };
 
   const handleSelectChapter = (chapterId: number) => {
+    if (!session) {
+      setShowLoginScreen(true);
+      return;
+    }
     const chapter = ALL_CHAPTERS.find(c => c.id === chapterId);
     if (chapter) {
       setSelectedChapter(chapter);
@@ -124,6 +127,10 @@ const App: React.FC = () => {
   };
 
   const handleShowHistory = async () => {
+    if (!session) {
+      setShowLoginScreen(true);
+      return;
+    }
     // Supabaseから自分の履歴を取得
     try {
       const { data, error } = await supabase
@@ -159,6 +166,10 @@ const App: React.FC = () => {
   };
 
   const handleShowChapterHistory = (chapterId: number) => {
+    if (!session) {
+      setShowLoginScreen(true);
+      return;
+    }
     setFilteredChapterId(chapterId);
     setCurrentPage(Page.History);
   };
@@ -187,20 +198,31 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-100 py-6 flex flex-col justify-center sm:py-12">
       <div className="absolute top-0 right-0 mr-4 mt-4 flex items-center space-x-4 z-50">
-        {userAvatar && (
-          <img
-            src={userAvatar}
-            alt="User Avatar"
-            className="w-8 h-8 rounded-full border shadow"
-            referrerPolicy="no-referrer"
-          />
+        {!session ? (
+          <button
+            onClick={() => setShowLoginScreen(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-xl shadow text-lg"
+          >
+            ログイン
+          </button>
+        ) : (
+          <>
+            {userAvatar && (
+              <img
+                src={userAvatar}
+                alt="User Avatar"
+                className="w-8 h-8 rounded-full border shadow"
+                referrerPolicy="no-referrer"
+              />
+            )}
+            <button
+              onClick={handleLogout}
+              className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded shadow text-sm"
+            >
+              ログアウト
+            </button>
+          </>
         )}
-        <button
-          onClick={handleLogout}
-          className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded shadow text-sm"
-        >
-          ログアウト
-        </button>
       </div>
       <main>{renderPage()}</main>
       <footer className="text-center text-sm text-gray-500 mt-8 pb-4">

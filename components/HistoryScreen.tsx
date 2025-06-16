@@ -68,7 +68,7 @@ const HistoryScreen: React.FC<HistoryScreenProps> = ({ history, onBackToChapters
             &larr; 章選択に戻る
           </button>
         </div>
-
+        
         {/* Geminiアドバイス表示 */}
         <div className="mb-8 p-4 border border-yellow-200 rounded-md bg-yellow-50">
           <h3 className="text-lg font-semibold mb-2 text-yellow-700">AI講師による履歴分析アドバイス</h3>
@@ -123,7 +123,7 @@ const HistoryScreen: React.FC<HistoryScreenProps> = ({ history, onBackToChapters
                                     </li>
                                   ))}
                                 </ul>
-                              </div>
+                </div>
                             )}
                           </li>
                         );
@@ -162,7 +162,7 @@ const HistoryScreen: React.FC<HistoryScreenProps> = ({ history, onBackToChapters
             </ul>
           </>
         )}
-
+        
         {history.length > 0 && (
           <div className="text-center">
             <button
