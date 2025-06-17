@@ -11,7 +11,11 @@ interface Row {
   attempt: number;
 }
 
-const AdminDashboard: React.FC = () => {
+interface AdminDashboardProps {
+  onBackToMain?: () => void;
+}
+
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMain }) => {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,6 +78,14 @@ const AdminDashboard: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto p-8">
       <h1 className="text-2xl font-bold mb-6">管理者ダッシュボード</h1>
+      {onBackToMain && (
+        <button
+          className="mb-6 bg-slate-500 hover:bg-slate-600 text-white font-semibold py-2 px-6 rounded shadow text-base"
+          onClick={onBackToMain}
+        >
+          学習画面に戻る
+        </button>
+      )}
       <table className="w-full border-collapse bg-white shadow rounded">
         <thead>
           <tr className="bg-slate-100">

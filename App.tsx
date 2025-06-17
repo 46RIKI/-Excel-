@@ -201,7 +201,10 @@ const App: React.FC = () => {
   // 管理者ログイン画面またはダッシュボードの表示
   if (showAdminLoginScreen) {
     if (session) {
-      return <AdminDashboard />;
+      return <AdminDashboard onBackToMain={() => {
+        setShowAdminLoginScreen(false);
+        setCurrentPage(Page.ChapterSelection);
+      }} />;
     } else {
       return <LoginScreen onCancel={() => setShowAdminLoginScreen(false)} />;
     }
