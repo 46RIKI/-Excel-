@@ -8,6 +8,7 @@ import ResultScreen from './components/ResultScreen';
 import HistoryScreen from './components/HistoryScreen';
 import LoginScreen from './components/LoginScreen';
 import { getSupabaseClient } from './hooks/useSupabase';
+import AdminDashboard from './components/AdminDashboard';
 
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>(Page.ChapterSelection);
@@ -18,6 +19,7 @@ const App: React.FC = () => {
   const [session, setSession] = useState<any>(undefined);
   const [filteredChapterId, setFilteredChapterId] = useState<number | null>(null);
   const [showLoginScreen, setShowLoginScreen] = useState<boolean>(false);
+  const [showAdminLoginScreen, setShowAdminLoginScreen] = useState(false);
 
   const supabase = getSupabaseClient();
 
@@ -96,6 +98,7 @@ const App: React.FC = () => {
       await supabase.from('scores').insert([
         {
           user_id: session.user.id,
+          full_name: session.user.user_metadata?.full_name || '',
           chapter_id: selectedChapter.id,
           chapter_title: selectedChapter.title,
           score: score,
@@ -195,6 +198,15 @@ const App: React.FC = () => {
     }
   };
 
+  // 管理者ログイン画面またはダッシュボードの表示
+  if (showAdminLoginScreen) {
+    if (session) {
+      return <AdminDashboard />;
+    } else {
+      return <LoginScreen onCancel={() => setShowAdminLoginScreen(false)} />;
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-100 py-6 flex flex-col justify-center sm:py-12">
       <div className="absolute top-0 right-0 mr-4 mt-4 flex items-center space-x-4 z-50">
@@ -225,8 +237,15 @@ const App: React.FC = () => {
         )}
       </div>
       <main>{renderPage()}</main>
-      <footer className="text-center text-sm text-gray-500 mt-8 pb-4">
-        &copy; {new Date().getFullYear()} Excel Quiz Grader. All rights reserved.
+      <footer className="text-center text-sm text-gray-500 mt-8 pb-4 flex flex-col items-center">
+        <span>© {new Date().getFullYear()} Excel Quiz Grader. All rights reserved.</span>
+        <button
+          className="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded shadow text-sm"
+          type="button"
+          onClick={() => setShowAdminLoginScreen(true)}
+        >
+          管理者サイトにログイン
+        </button>
       </footer>
     </div>
   );
