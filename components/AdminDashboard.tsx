@@ -59,17 +59,49 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToMain }) => {
 
   useEffect(() => {
     fetchRows();
+
+    // scoresテーブルの変更をリアルタイムで購読
+    const supabase = getSupabaseClient();
+    const scoresChanges = supabase
+      .channel('scores-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'scores' },
+        (payload) => {
+          console.log('スコアテーブルに変更がありました:', payload);
+          // 変更があったらデータを再取得して画面を更新
+          fetchRows();
+        }
+      )
+      .subscribe();
+
+    // コンポーネントがアンマウントされるときに購読を解除
+    return () => {
+      supabase.removeChannel(scoresChanges);
+    };
   }, []);
 
   const handleDelete = async (id: number) => {
     if (!window.confirm('この履歴を削除しますか？')) return;
+
+    // Optimistic UI: 削除前の状態をバックアップ
+    const originalRows = [...rows];
+    // UIを即時更新
+    setRows(prev => prev.filter(row => row.id !== id));
+
     const supabase = getSupabaseClient();
     const { error } = await supabase.from('scores').delete().eq('id', id);
+
     if (error) {
-      alert('削除に失敗しました');
-      return;
+      alert('削除に失敗しました: ' + error.message);
+      // エラーが発生した場合はUIを元に戻す
+      setRows(originalRows);
     }
-    setRows(prev => prev.filter(row => row.id !== id));
+    // 成功した場合、UIはすでに更新されているので何もしない。
+    // 他のクライアントにはリアルタイム購読を通じて変更が伝わる。
+    // ただし、Attempt（受験回数）の再計算が必要なため、削除成功後もフェッチを維持する。
+    // この行は変更せず、問題が解決しない場合の次のステップとして検討する。
+    fetchRows();
   };
 
   if (loading) return <div className="p-8 text-center">読み込み中...</div>;

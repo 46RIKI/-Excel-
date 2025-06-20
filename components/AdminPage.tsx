@@ -81,9 +81,18 @@ const AdminPage: React.FC<AdminPageProps> = ({ onBackToMain }) => {
       return;
     }
     if (!window.confirm('この管理者を削除しますか？')) return;
+
+    // Optimistic UI: 削除前の状態を保存
+    const originalAdmins = [...adminUsers];
+    // UIを即時更新
+    setAdminUsers(currentAdmins => currentAdmins.filter(admin => admin.id !== id));
+
     const { error } = await supabase.from('admins').delete().eq('id', id);
+
     if (error) {
       alert(`管理者の削除に失敗しました: ${error.message}`);
+      // エラーが発生した場合はUIを元に戻す
+      setAdminUsers(originalAdmins);
     }
   };
 

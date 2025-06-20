@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Page, Chapter as ChapterType, UserAnswers, ScoreEntry } from './types';
 import { ALL_CHAPTERS } from './constants';
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -24,6 +24,13 @@ const App: React.FC = () => {
 
   const supabase = getSupabaseClient();
 
+  const handleBackToChapters = useCallback(() => {
+    setSelectedChapter(null);
+    setCurrentUserAnswers({});
+    setCurrentScore(0);
+    setCurrentPage(Page.ChapterSelection);
+  }, []);
+
   useEffect(() => {
     // 初回マウント時にsessionを取得
     supabase.auth.getSession().then(({ data }) => {
@@ -33,11 +40,14 @@ const App: React.FC = () => {
     // onAuthStateChangeでsessionを監視
     const { data: authListener } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       setSession(session);
+      if (!session) {
+        handleBackToChapters();
+      }
     });
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, []);
+  }, [handleBackToChapters]);
 
   // session取得中はローディング表示
   if (session === undefined) {
@@ -53,7 +63,14 @@ const App: React.FC = () => {
   const userAvatar = session?.user?.user_metadata?.avatar_url || '';
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error logging out:', error);
+      alert('ログアウト中にエラーが発生しました。');
+    }
+    // After signOut, explicitly reset the state to ensure the UI updates.
+    setSession(null);
+    handleBackToChapters();
   };
 
   const handleSelectChapter = (chapterId: number) => {
@@ -121,13 +138,6 @@ const App: React.FC = () => {
     if (selectedChapter) {
       setCurrentPage(Page.Problem);
     }
-  };
-
-  const handleBackToChapters = () => {
-    setSelectedChapter(null);
-    setCurrentUserAnswers({});
-    setCurrentScore(0);
-    setCurrentPage(Page.ChapterSelection);
   };
 
   const handleShowHistory = async () => {
