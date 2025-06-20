@@ -9,6 +9,7 @@ import HistoryScreen from './components/HistoryScreen';
 import LoginScreen from './components/LoginScreen';
 import { getSupabaseClient } from './hooks/useSupabase';
 import AdminDashboard from './components/AdminDashboard';
+import AdminPage from './components/AdminPage';
 
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>(Page.ChapterSelection);
@@ -177,6 +178,14 @@ const App: React.FC = () => {
     setCurrentPage(Page.History);
   };
 
+  const handleAdminLoginClick = () => {
+    if (session) {
+      setCurrentPage(Page.Admin);
+    } else {
+      setShowLoginScreen(true);
+    }
+  };
+
   const renderPage = () => {
     switch (currentPage) {
       case Page.ChapterSelection:
@@ -193,6 +202,13 @@ const App: React.FC = () => {
         return null;
       case Page.History:
         return <HistoryScreen history={history} onBackToChapters={handleBackToChapters} onClearHistory={handleClearHistory} filteredChapterId={filteredChapterId} setFilteredChapterId={setFilteredChapterId}/>;
+      case Page.Admin:
+        if (session) {
+          return <AdminPage onBackToMain={handleBackToChapters} />;
+        }
+        // This case should ideally not be reached if there's no session, due to the check in handleAdminLoginClick.
+        // But as a fallback, we show nothing or a message.
+        return <LoginScreen onCancel={handleBackToChapters} />;
       default:
         return <ChapterSelectionScreen chapters={ALL_CHAPTERS} onSelectChapter={handleSelectChapter} onShowHistory={handleShowHistory} onShowChapterHistory={handleShowChapterHistory} />;
     }
@@ -243,11 +259,11 @@ const App: React.FC = () => {
       <footer className="text-center text-sm text-gray-500 mt-8 pb-4 flex flex-col items-center">
         <span>© {new Date().getFullYear()} Excel Quiz Grader. All rights reserved.</span>
         <button
-          className="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded shadow text-sm"
+          className="mt-2 bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 px-4 rounded shadow text-sm"
           type="button"
-          onClick={() => setShowAdminLoginScreen(true)}
+          onClick={handleAdminLoginClick}
         >
-          管理者サイトにログイン
+          管理者サイト
         </button>
       </footer>
     </div>

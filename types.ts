@@ -37,5 +37,6 @@ export enum Page {
   Problem = 'Problem',
   Result = 'Result',
   History = 'History',
-  Login = 'Login'
+  Login = 'Login',
+  Admin = 'Admin'
 }

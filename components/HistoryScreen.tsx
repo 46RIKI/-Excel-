@@ -10,7 +10,6 @@ interface HistoryScreenProps {
   filteredChapterId: number | null;
   setFilteredChapterId: React.Dispatch<React.SetStateAction<number | null>>;
 }
-
 // 章ごとに履歴をグループ化
 function groupByChapter(history: ScoreEntry[]) {
   const map: { [chapterId: number]: ScoreEntry[] } = {};
