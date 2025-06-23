@@ -3,21 +3,27 @@ import { Chapter, UserAnswers } from '../types';
 
 interface ProblemScreenProps {
   chapter: Chapter;
+  initialAnswers: UserAnswers;
   onSubmit: (answers: UserAnswers) => void;
   onBack: () => void;
 }
 
-const ProblemScreen: React.FC<ProblemScreenProps> = ({ chapter, onSubmit, onBack }) => {
-  const [userAnswers, setUserAnswers] = useState<UserAnswers>({});
+const ProblemScreen: React.FC<ProblemScreenProps> = ({ chapter, initialAnswers, onSubmit, onBack }) => {
+  const [userAnswers, setUserAnswers] = useState<UserAnswers>(initialAnswers);
 
   useEffect(() => {
-    // Initialize answers
-    const initialAnswers: UserAnswers = {};
-    chapter.blanksInOrder.forEach(blankId => {
-      initialAnswers[blankId] = "";
-    });
-    setUserAnswers(initialAnswers);
-  }, [chapter]);
+    // Set initial state only if not already provided
+    if (Object.keys(initialAnswers).length === 0) {
+      const initial: UserAnswers = {};
+      chapter.blanksInOrder.forEach(blankId => {
+        initial[blankId] = "";
+      });
+      setUserAnswers(initial);
+    } else {
+      // If initialAnswers are provided, use them directly
+      setUserAnswers(initialAnswers);
+    }
+  }, [chapter, initialAnswers]);
 
   const handleAnswerChange = useCallback((changedBlankId: string, selectedValue: string) => {
     setUserAnswers(prevAnswers => {

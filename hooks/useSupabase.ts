@@ -7,7 +7,14 @@ let supabase: SupabaseClient | null = null;
 
 export function getSupabaseClient(): SupabaseClient {
   if (!supabase) {
-    supabase = createClient(supabaseUrl, supabaseAnonKey);
+    supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        storage: sessionStorage,
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+      },
+    });
   }
   return supabase;
 } 

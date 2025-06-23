@@ -8,87 +8,92 @@ import ResultScreen from './components/ResultScreen';
 import HistoryScreen from './components/HistoryScreen';
 import LoginScreen from './components/LoginScreen';
 import { getSupabaseClient } from './hooks/useSupabase';
-import AdminDashboard from './components/AdminDashboard';
 import AdminPage from './components/AdminPage';
+import { User } from '@supabase/supabase-js';
 
 const App: React.FC = () => {
-  const [currentPage, setCurrentPage] = useState<Page>(Page.ChapterSelection);
-  const [selectedChapter, setSelectedChapter] = useState<ChapterType | null>(null);
-  const [currentUserAnswers, setCurrentUserAnswers] = useState<UserAnswers>({});
-  const [currentScore, setCurrentScore] = useState<number>(0);
-  const [history, setHistory] = useLocalStorage<ScoreEntry[]>('excelQuizHistory', []);
-  const [session, setSession] = useState<any>(undefined);
-  const [filteredChapterId, setFilteredChapterId] = useState<number | null>(null);
-  const [showLoginScreen, setShowLoginScreen] = useState<boolean>(false);
-  const [showAdminLoginScreen, setShowAdminLoginScreen] = useState(false);
+  // --- State Management ---
 
+  // Auth State
+  const [user, setUser] = useState<User | null>(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
+
+  // Persisted App State (saved to localStorage)
+  const [currentPage, setCurrentPage] = useLocalStorage<Page>('app_currentPage', Page.ChapterSelection);
+  const [selectedChapterId, setSelectedChapterId] = useLocalStorage<number | null>('app_selectedChapterId', null);
+  const [userAnswers, setUserAnswers] = useLocalStorage<UserAnswers>('app_userAnswers', {});
+  
+  // Ephemeral (non-persisted) State
+  const [selectedChapter, setSelectedChapter] = useState<ChapterType | null>(null);
+  const [currentScore, setCurrentScore] = useState<number>(0);
+  const [showLoginScreen, setShowLoginScreen] = useState<boolean>(false);
+  
+  // History is also persisted, but managed separately
+  const [history, setHistory] = useLocalStorage<ScoreEntry[]>('excelQuizHistory', []);
+  const [filteredChapterId, setFilteredChapterId] = useState<number | null>(null);
+  
   const supabase = getSupabaseClient();
 
-  const handleBackToChapters = useCallback(() => {
-    setSelectedChapter(null);
-    setCurrentUserAnswers({});
-    setCurrentScore(0);
+  // --- Effects ---
+
+  // Define cleanup logic first, so it can be used in the auth effect
+  const handleLogoutCleanup = useCallback(() => {
     setCurrentPage(Page.ChapterSelection);
-  }, []);
+    setSelectedChapterId(null);
+    setUserAnswers({});
+    setCurrentScore(0);
+    setShowLoginScreen(false);
+  }, [setCurrentPage, setSelectedChapterId, setUserAnswers]);
 
+  // 1. Handle Auth State Changes and Cleanup
   useEffect(() => {
-    // 初回マウント時にsessionを取得
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-    });
-
-    // onAuthStateChangeでsessionを監視
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
-      setSession(session);
-      if (!session) {
-        handleBackToChapters();
+    setLoadingAuth(true);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+      setLoadingAuth(false);
+      
+      // Reset app state only on explicit sign-out
+      if (event === 'SIGNED_OUT') {
+        handleLogoutCleanup();
       }
     });
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, [handleBackToChapters]);
+    return () => subscription.unsubscribe();
+  }, [handleLogoutCleanup]);
 
-  // session取得中はローディング表示
-  if (session === undefined) {
-    return <div className="min-h-screen flex items-center justify-center bg-slate-100 text-xl">Loading...</div>;
-  }
-
-  // 未ログイン時は右上にログインボタンを表示し、showLoginScreen時のみLoginScreenを表示
-  if (!session && showLoginScreen) {
-    return <LoginScreen onCancel={() => setShowLoginScreen(false)} />;
-  }
-
-  // Googleログイン後のユーザー情報取得
-  const userAvatar = session?.user?.user_metadata?.avatar_url || '';
-
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Error logging out:', error);
-      alert('ログアウト中にエラーが発生しました。');
+  // 2. Derive selectedChapter object from persisted ID
+  useEffect(() => {
+    if (selectedChapterId !== null) {
+      const chapter = ALL_CHAPTERS.find(c => c.id === selectedChapterId);
+      setSelectedChapter(chapter || null);
+    } else {
+      setSelectedChapter(null);
     }
-    // After signOut, explicitly reset the state to ensure the UI updates.
-    setSession(null);
-    handleBackToChapters();
-  };
+  }, [selectedChapterId]);
+
+  // 3. Clean up state on logout - REMOVED, logic is now inside auth effect.
+  
+  // --- Handlers ---
 
   const handleSelectChapter = (chapterId: number) => {
-    if (!session) {
+    if (!user) {
       setShowLoginScreen(true);
       return;
     }
-    const chapter = ALL_CHAPTERS.find(c => c.id === chapterId);
-    if (chapter) {
-      setSelectedChapter(chapter);
-      setCurrentPage(Page.Problem);
-    }
+    setSelectedChapterId(chapterId);
+    setCurrentPage(Page.Problem);
   };
 
+  const handleBackToMain = useCallback(() => {
+    setCurrentPage(Page.ChapterSelection);
+    setSelectedChapterId(null);
+    setUserAnswers({});
+    setCurrentScore(0);
+  }, [setCurrentPage, setSelectedChapterId, setUserAnswers]);
+  
   const handleSubmitAnswers = async (answers: UserAnswers) => {
-    if (!selectedChapter) return;
+    if (!selectedChapter || !user) return;
 
-    setCurrentUserAnswers(answers);
+    setUserAnswers(answers);
     let correctCount = 0;
     selectedChapter.blanksInOrder.forEach(blankId => {
       if (answers[blankId] === selectedChapter.correctAnswers[blankId]) {
@@ -109,14 +114,13 @@ const App: React.FC = () => {
       questionSegments: selectedChapter.questionSegments,
       choices: selectedChapter.choices,
     };
-    setHistory(prevHistory => [...prevHistory, newScoreEntry]);
+    setHistory(prevHistory => [newScoreEntry, ...prevHistory]);
 
-    // Supabaseに履歴を保存
     try {
       await supabase.from('scores').insert([
         {
-          user_id: session.user.id,
-          full_name: session.user.user_metadata?.full_name || '',
+          user_id: user.id,
+          full_name: user.user_metadata?.full_name || '',
           chapter_id: selectedChapter.id,
           chapter_title: selectedChapter.title,
           score: score,
@@ -134,112 +138,81 @@ const App: React.FC = () => {
     setCurrentPage(Page.Result);
   };
 
-  const handleRetry = () => {
-    if (selectedChapter) {
-      setCurrentPage(Page.Problem);
-    }
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
   };
 
   const handleShowHistory = async () => {
-    if (!session) {
+    if (!user) {
       setShowLoginScreen(true);
       return;
     }
-    // Supabaseから自分の履歴を取得
     try {
       const { data, error } = await supabase
         .from('scores')
         .select('*')
-        .eq('user_id', session.user.id)
+        .eq('user_id', user.id)
         .order('date', { ascending: false });
       if (error) throw error;
-      if (data) {
-        // SupabaseのデータをScoreEntry型に変換
-        const supabaseHistory = data.map((row: any) => ({
-          chapterId: row.chapter_id,
-          chapterTitle: row.chapter_title,
-          score: row.score,
-          date: row.date,
-          userAnswers: row.user_answers,
-          correctAnswers: row.correct_answers,
-          questionSegments: row.question_segments,
-          choices: row.choices,
-        }));
-        setHistory(supabaseHistory);
-      }
+      setHistory(data.map((row: any) => ({
+        chapterId: row.chapter_id,
+        chapterTitle: row.chapter_title,
+        score: row.score,
+        date: row.date,
+        userAnswers: row.user_answers,
+        correctAnswers: row.correct_answers,
+        questionSegments: row.question_segments,
+        choices: row.choices,
+      })) || []);
     } catch (e) {
       console.error('Supabaseから履歴取得に失敗:', e);
     }
     setCurrentPage(Page.History);
   };
-  
-  const handleClearHistory = () => {
-    if (window.confirm("本当に学習履歴をすべて削除しますか？この操作は元に戻せません。")) {
-      setHistory([]);
-    }
-  };
-
-  const handleShowChapterHistory = (chapterId: number) => {
-    if (!session) {
-      setShowLoginScreen(true);
-      return;
-    }
-    setFilteredChapterId(chapterId);
-    setCurrentPage(Page.History);
-  };
 
   const handleAdminLoginClick = () => {
-    if (session) {
+    if (user) {
       setCurrentPage(Page.Admin);
     } else {
       setShowLoginScreen(true);
     }
   };
 
+  // --- Rendering Logic ---
+
+  if (loadingAuth) {
+    return <div className="min-h-screen flex items-center justify-center bg-slate-100 text-xl">Loading...</div>;
+  }
+  
+  if (!user && showLoginScreen) {
+    return <LoginScreen onCancel={() => setShowLoginScreen(false)} />;
+  }
+
   const renderPage = () => {
     switch (currentPage) {
       case Page.ChapterSelection:
-        return <ChapterSelectionScreen chapters={ALL_CHAPTERS} onSelectChapter={handleSelectChapter} onShowHistory={handleShowHistory} onShowChapterHistory={handleShowChapterHistory} />;
+        return <ChapterSelectionScreen chapters={ALL_CHAPTERS} onSelectChapter={handleSelectChapter} onShowHistory={handleShowHistory} onShowChapterHistory={(id) => { setFilteredChapterId(id); setCurrentPage(Page.History); }} />;
       case Page.Problem:
-        if (selectedChapter) {
-          return <ProblemScreen chapter={selectedChapter} onSubmit={handleSubmitAnswers} onBack={handleBackToChapters}/>;
-        }
-        return null; // Or some error/fallback
+        if (selectedChapter) return <ProblemScreen chapter={selectedChapter} initialAnswers={userAnswers} onSubmit={handleSubmitAnswers} onBack={handleBackToMain}/>;
+        return null;
       case Page.Result:
-        if (selectedChapter) {
-          return <ResultScreen chapter={selectedChapter} userAnswers={currentUserAnswers} score={currentScore} onRetry={handleRetry} onBackToChapters={handleBackToChapters} />;
-        }
+        if (selectedChapter) return <ResultScreen chapter={selectedChapter} userAnswers={userAnswers} score={currentScore} onRetry={() => setCurrentPage(Page.Problem)} onBackToChapters={handleBackToMain} />;
         return null;
       case Page.History:
-        return <HistoryScreen history={history} onBackToChapters={handleBackToChapters} onClearHistory={handleClearHistory} filteredChapterId={filteredChapterId} setFilteredChapterId={setFilteredChapterId}/>;
+        return <HistoryScreen history={history} onBackToChapters={handleBackToMain} onClearHistory={() => setHistory([])} filteredChapterId={filteredChapterId} setFilteredChapterId={setFilteredChapterId}/>;
       case Page.Admin:
-        if (session) {
-          return <AdminPage onBackToMain={handleBackToChapters} />;
-        }
-        // This case should ideally not be reached if there's no session, due to the check in handleAdminLoginClick.
-        // But as a fallback, we show nothing or a message.
-        return <LoginScreen onCancel={handleBackToChapters} />;
+        if (user) return <AdminPage onBackToMain={handleBackToMain} />;
+        return null;
       default:
-        return <ChapterSelectionScreen chapters={ALL_CHAPTERS} onSelectChapter={handleSelectChapter} onShowHistory={handleShowHistory} onShowChapterHistory={handleShowChapterHistory} />;
+        setCurrentPage(Page.ChapterSelection); // Fallback for invalid state
+        return null;
     }
   };
-
-  // 管理者ログイン画面またはダッシュボードの表示
-  if (showAdminLoginScreen) {
-    if (session) {
-      return <AdminDashboard onBackToMain={() => {
-        setShowAdminLoginScreen(false);
-        setCurrentPage(Page.ChapterSelection);
-      }} />;
-    } else {
-      return <LoginScreen onCancel={() => setShowAdminLoginScreen(false)} />;
-    }
-  }
 
   return (
     <div className="min-h-screen bg-slate-100 py-6 flex flex-col justify-center sm:py-12">
       <div className="absolute top-0 right-0 mr-4 mt-4 flex items-center space-x-4 z-50">
-        {!session ? (
+        {!user ? (
           <button
             onClick={() => setShowLoginScreen(true)}
             className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-xl shadow text-lg"
@@ -248,33 +221,33 @@ const App: React.FC = () => {
           </button>
         ) : (
           <>
-            {userAvatar && (
-              <img
-                src={userAvatar}
-                alt="User Avatar"
-                className="w-8 h-8 rounded-full border shadow"
-                referrerPolicy="no-referrer"
-              />
-            )}
+            <img src={user.user_metadata?.avatar_url || ''} alt="User Avatar" className="h-12 w-12 rounded-full border-2 border-white shadow-md" />
             <button
               onClick={handleLogout}
-              className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded shadow text-sm"
+              className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-xl shadow text-lg"
             >
               ログアウト
             </button>
           </>
         )}
       </div>
-      <main>{renderPage()}</main>
-      <footer className="text-center text-sm text-gray-500 mt-8 pb-4 flex flex-col items-center">
-        <span>© {new Date().getFullYear()} Excel Quiz Grader. All rights reserved.</span>
-        <button
-          className="mt-2 bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 px-4 rounded shadow text-sm"
-          type="button"
-          onClick={handleAdminLoginClick}
-        >
-          管理者サイト
-        </button>
+
+      <main className="relative py-3 sm:max-w-4xl sm:mx-auto w-full">
+        <div className="relative px-4 py-10 bg-white shadow-lg sm:rounded-3xl sm:p-20">
+          {renderPage()}
+        </div>
+      </main>
+      
+      <footer className="text-center mt-8 text-slate-500 text-sm">
+        <p>© 2025 Excel Quiz Grader. All rights reserved.</p>
+        <div className="mt-2">
+            <button
+                onClick={handleAdminLoginClick}
+                className="bg-slate-200 hover:bg-slate-300 text-slate-600 font-semibold py-1 px-3 rounded shadow text-xs"
+            >
+                管理者サイト
+            </button>
+        </div>
       </footer>
     </div>
   );
