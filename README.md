@@ -1,14 +1,46 @@
-# Run and deploy your AI Studio app
+# Excelクイズサイト
 
-This contains everything you need to run your app locally.
+## 概要
 
-## Run Locally
+このアプリケーションは、ユーザーがExcelのスキルをクイズ形式で楽しく学習するためのWebサイトです。
+Googleアカウントで簡単にログインでき、学習の進捗や履歴は自動で保存されます。
 
-**Prerequisites:**  Node.js
+管理者向けの機能も充実しており、問題の管理や全ユーザーの学習状況を分析することが可能です。
 
+## 主な機能
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+- **クイズ機能**: Excelの様々な問題に挑戦できます。
+- **Googleログイン**: 簡単かつ安全にログインできます。
+- **学習履歴**: 過去の成績や解答をいつでも確認できます。
+- **進捗の自動保存**: 学習中に画面を閉じても、中断したところから再開できます。
+- **管理者機能**:
+    - 全ユーザーの学習履歴の閲覧・管理
+    - 管理者ユーザーの追加・削除
+
+## 技術スタック
+
+- **フロントエンド**: React, TypeScript, Vite
+- **バックエンド/DB**: Supabase (Authentication, Database)
+- **生成AI**: Google Gemini API
+
+## 開発環境での実行方法
+
+**前提条件:**
+- [Node.js](https://nodejs.org/) がインストールされていること
+- [Google Gemini APIキー](https://ai.google.dev/aistudio) を取得済みであること
+
+**手順:**
+1.  **依存パッケージのインストール:**
+    ```bash
+    npm install
+    ```
+2.  **環境変数の設定:**
+    プロジェクトのルートに `.env` ファイルを作成し、ご自身のGemini APIキーを設定します。
+    ```
+    VITE_GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
+    ```
+3.  **開発サーバーの起動:**
+    ```bash
+    npm run dev
+    ```
+    起動後、ターミナルに表示されるローカルサーバーのアドレス (例: `http://localhost:5173`) にブラウザでアクセスしてください。
