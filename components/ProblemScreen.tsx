@@ -106,17 +106,8 @@ const ProblemScreen: React.FC<ProblemScreenProps> = ({ chapter, initialAnswers, 
         <h1 className="text-2xl md:text-3xl font-bold mb-2 text-gray-800">{chapter.title}</h1>
         <p className="text-gray-600 mb-6 text-sm italic">{chapter.problemDescription}</p>
         
-        <div className="text-gray-700 leading-relaxed mb-8 p-4 border border-gray-200 rounded-md bg-slate-50" style={{lineHeight: '2.5'}}>
+        <div className="text-gray-700 leading-relaxed mb-4 p-4 border border-gray-200 rounded-md bg-slate-50" style={{lineHeight: '2.5'}}>
           {renderQuestionSegments()}
-        </div>
-
-        <div className="mb-8 p-4 border border-gray-200 rounded-md bg-slate-50">
-            <h3 className="text-lg font-semibold mb-3 text-gray-700">選択肢一覧:</h3>
-            <ul className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm text-gray-600">
-                {chapter.choices.map(choice => (
-                    <li key={choice} className="bg-slate-100 p-2 rounded">{choice}</li>
-                ))}
-            </ul>
         </div>
 
         <button
