@@ -154,15 +154,15 @@ const App: React.FC = () => {
         .eq('user_id', user.id)
         .order('date', { ascending: false });
       if (error) throw error;
-      setHistory(data.map((row: any) => ({
-        chapterId: row.chapter_id,
-        chapterTitle: row.chapter_title,
-        score: row.score,
-        date: row.date,
-        userAnswers: row.user_answers,
-        correctAnswers: row.correct_answers,
-        questionSegments: row.question_segments,
-        choices: row.choices,
+      setHistory(data.map((row: unknown) => ({
+        chapterId: (row as any).chapter_id,
+        chapterTitle: (row as any).chapter_title,
+        score: (row as any).score,
+        date: (row as any).date,
+        userAnswers: (row as any).user_answers,
+        correctAnswers: (row as any).correct_answers,
+        questionSegments: (row as any).question_segments,
+        choices: (row as any).choices,
       })) || []);
     } catch (e) {
       console.error('Supabaseから履歴取得に失敗:', e);

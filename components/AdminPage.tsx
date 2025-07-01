@@ -45,8 +45,8 @@ const AdminPage: React.FC<AdminPageProps> = ({ onBackToMain }) => {
         if (data) {
           await fetchAdminUsers();
         }
-      } catch (e: any) {
-        setError(`エラー: ${e.message}`);
+      } catch (e: unknown) {
+        setError(`エラー: ${(e as Error).message}`);
         setIsAuthorized(false);
       } finally {
         setLoading(false);
