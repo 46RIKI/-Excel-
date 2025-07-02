@@ -106,7 +106,7 @@ const ProblemScreen: React.FC<ProblemScreenProps> = ({ chapter, initialAnswers, 
         <h1 className="text-2xl md:text-3xl font-bold mb-2 text-gray-800">{chapter.title}</h1>
         <p className="text-gray-600 mb-6 text-sm italic">{chapter.problemDescription}</p>
         
-        <div className="text-gray-700 leading-relaxed mb-4 p-4 border border-gray-200 rounded-md bg-slate-50" style={{lineHeight: '2.5'}}>
+        <div className="text-gray-700 leading-relaxed mb-4 p-4 border border-gray-200 rounded-md bg-slate-50" style={{lineHeight: '1.5'}}>
           {renderQuestionSegments()}
         </div>
 
