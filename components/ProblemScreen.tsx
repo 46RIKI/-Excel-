@@ -15,13 +15,13 @@ const ProblemScreen: React.FC<ProblemScreenProps> = ({ chapter, initialAnswers, 
     // Set initial state only if not already provided
     if (Object.keys(initialAnswers).length === 0) {
       const initial: UserAnswers = {};
-      chapter.blanksInOrder.forEach(blankId => {
+    chapter.blanksInOrder.forEach(blankId => {
         initial[blankId] = "";
-      });
+    });
       setUserAnswers(initial);
     } else {
       // If initialAnswers are provided, use them directly
-      setUserAnswers(initialAnswers);
+    setUserAnswers(initialAnswers);
     }
   }, [chapter, initialAnswers]);
 

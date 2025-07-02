@@ -89,7 +89,7 @@ const App: React.FC = () => {
     setUserAnswers({});
     setCurrentScore(0);
   }, [setCurrentPage, setSelectedChapterId, setUserAnswers]);
-  
+
   const handleSubmitAnswers = async (answers: UserAnswers) => {
     if (!selectedChapter || !user) return;
 
@@ -169,7 +169,7 @@ const App: React.FC = () => {
     }
     setCurrentPage(Page.History);
   };
-
+  
   const handleAdminLoginClick = () => {
     if (user) {
       setCurrentPage(Page.Admin);
